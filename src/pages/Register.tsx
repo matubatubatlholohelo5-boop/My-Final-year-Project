@@ -8,6 +8,7 @@ const Register: React.FC = () => {
   const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    console.log('Form submission triggered!');
     e.preventDefault();
     setError('');
     setSuccess('');

@@ -1,16 +1,24 @@
 import subprocess
 import sys
 import os
+import platform
 
 def run_server():
     """Start the FastAPI server"""
     try:
         # Change to the backend directory
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        
+
+        # Determine platform-specific path to virtual environment python
+        if platform.system() == "Windows":
+            python_cmd = "venv\\Scripts\\python.exe"
+        else:
+            python_cmd = "venv/bin/python"
+
+        if not os.path.exists(python_cmd):
+            raise FileNotFoundError(f"Could not find Python at {python_cmd}")
+
         # Run the server
-        # Use virtual environment if it exists
-        python_cmd = "venv/bin/python" if os.path.exists("venv/bin/python") else "python3"
         subprocess.run([
             python_cmd, "-m", "uvicorn", 
             "app.main:app", 

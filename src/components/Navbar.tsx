@@ -3,22 +3,22 @@ import { Link } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="flex items-center space-x-6">
+    <nav className="flex items-center space-x-2 md:space-x-6">
       <Link 
         to="/" 
-        className="text-white hover:text-teal-200 transition-colors duration-200 font-medium px-3 py-2 rounded-md hover:bg-white/10"
+        className="text-gray-300 hover:text-white transition-colors duration-300 font-medium px-3 py-2 rounded-lg hover:bg-gray-700/60"
       >
         Home
       </Link>
       <Link 
         to="/login" 
-        className="text-white hover:text-teal-200 transition-colors duration-200 font-medium px-3 py-2 rounded-md hover:bg-white/10"
+        className="text-gray-300 hover:text-white transition-colors duration-300 font-medium px-3 py-2 rounded-lg hover:bg-gray-700/60"
       >
         Login
       </Link>
       <Link 
         to="/register" 
-        className="bg-white text-teal-600 hover:bg-teal-50 transition-colors duration-200 font-medium px-4 py-2 rounded-md shadow-sm"
+        className="bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-300 font-bold px-4 py-2 rounded-lg shadow-lg transform hover:scale-105"
       >
         Register
       </Link>

@@ -29,6 +29,8 @@ A full-stack web application for tracking driver performance and history, built 
    # Terminal 1 - Backend
    cd driver-management-backend
    python start_server.py
+   #USE THIS FOR BACK-END
+   uvicorn app.main:app --reload --port 8000
    
    # Terminal 2 - Frontend
    npm run dev
