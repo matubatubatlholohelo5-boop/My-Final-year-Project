@@ -80,3 +80,6 @@ driver-management-app/
 ├── validate_setup.py      # Setup validation
 └── SETUP.md              # Detailed setup guide
 ```
+#git add .
+#git commit -m ""
+#git push
