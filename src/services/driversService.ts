@@ -1,68 +1,68 @@
 // src/services/driversService.ts
-import axios from 'axios';
-import { getToken } from '../utils/auth';
+// We now import the centralized, configured API instance instead of raw axios
+import api from './api'; 
+// Note: We remove the import { getToken } from '../utils/auth'; and the authHeaders helper.
 
-const API_URL = "http://localhost:8000";
+// The API_URL is no longer needed here as the 'api' instance handles the baseURL.
 
-// Helper to add Authorization header
-const authHeaders = () => {
-  const token = getToken();
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  };
-};
-
+// export const createDriver = async (driverData: any) => { // Using 'any' is fine for quick demo
 export const createDriver = async (driverData: any) => {
-  const response = await axios.post(`${API_URL}/drivers/`, driverData, authHeaders());
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.post(`/drivers/`, driverData);
   return response.data;
 };
 
 export const deleteDriver = async (driverId: number) => {
-  await axios.delete(`${API_URL}/drivers/${driverId}`, authHeaders());
+  // Use 'api' and remove the authHeaders argument
+  await api.delete(`/drivers/${driverId}`);
 };
 
 // Updated function to accept and pass query parameters
 export const getDrivers = async (params?: { search?: string, status?: string, sort_by?: string }) => {
-  const response = await axios.get(`${API_URL}/drivers/`, { 
-    ...authHeaders(),
+  // Pass query parameters in the 'params' property of the configuration object
+  const response = await api.get(`/drivers/`, { 
     params: params 
   });
   return response.data;
 };
 
 export const updateDriver = async (driverId: number, driverData: any) => {
-  const response = await axios.put(`${API_URL}/drivers/${driverId}`, driverData, authHeaders());
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.put(`/drivers/${driverId}`, driverData);
   return response.data;
 };
 
 // Function to fetch a single driver by ID
 export const getDriverById = async (driverId: number) => {
-  const response = await axios.get(`${API_URL}/drivers/${driverId}`, authHeaders());
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.get(`/drivers/${driverId}`);
   return response.data;
 };
 
 // Function to get a driver's performance history
 export const getDriverHistory = async (driverId: number) => {
-  const response = await axios.get(`${API_URL}/drivers/${driverId}/history/`, authHeaders());
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.get(`/drivers/${driverId}/history/`);
   return response.data;
 };
 
 // function to add a performance record
 export const addDriverPerformance = async (driverId: number, performanceData: any) => {
-    const response = await axios.post(`${API_URL}/drivers/${driverId}/history/`, performanceData, authHeaders());
-    return response.data;
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.post(`/drivers/${driverId}/history/`, performanceData);
+  return response.data;
 };
 
 // function to update a performance record
 export const updateDriverPerformance = async (performanceId: number, performanceData: any) => {
-    const response = await axios.put(`${API_URL}/performances/${performanceId}`, performanceData, authHeaders());
-    return response.data;
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.put(`/performances/${performanceId}`, performanceData);
+  return response.data;
 };
 
 // Function to delete a performance record
 export const deleteDriverPerformance = async (performanceId: number) => {
-    const response = await axios.delete(`${API_URL}/performances/${performanceId}`, authHeaders());
-    return response.data;
+  // Use 'api' and remove the authHeaders argument
+  const response = await api.delete(`/performances/${performanceId}`);
+  return response.data;
 };

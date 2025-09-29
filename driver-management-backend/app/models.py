@@ -10,8 +10,13 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True)
     hashed_password = Column(String(255))
+    
+    # === ADDED FOR ROLE-BASED ACCESS CONTROL (RBAC) ===
+    # This field will store 'admin' or 'client'
+    role = Column(String(50), default="client") 
+    # ==================================================
 
-#  Driver model
+#  Driver model
 class Driver(Base):
     __tablename__ = "drivers"
     id = Column(Integer, primary_key=True, index=True)
@@ -35,7 +40,7 @@ class Driver(Base):
     def __repr__(self):
         return f"<Driver(id={self.id}, name='{self.name}')>"
 
-# Add DriverPerformance model
+# DriverPerformance model
 class DriverPerformance(Base):
     __tablename__ = "driver_performances"
 

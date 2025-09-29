@@ -2,77 +2,82 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { removeToken } from '../utils/auth';
+import { useAuth } from '../context/AuthContext'; // Import the useAuth hook
 
 const Header: React.FC = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, loading } = useAuth();
+    const { userRole, logout, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
-  const handleLogout = () => {
-    removeToken();
-    navigate('/login');
-  };
+    const handleLogout = () => {
+        logout();
+        navigate('/login'); // Redirect to login page after logout
+    };
 
-  if (loading) {
-    return null;
-  }
+    // Define navigation links based on role
+    const getNavLinks = () => {
+        if (userRole === 'admin') {
+            return (
+                <>
+                    <Link to="/admin/dashboard" className="text-white hover:text-blue-200 transition-colors px-3 py-2 rounded-md font-medium">
+                        Admin Dashboard
+                    </Link>
+                    <Link to="/drivers" className="text-white hover:text-blue-200 transition-colors px-3 py-2 rounded-md font-medium">
+                        Driver Management
+                    </Link>
+                </>
+            );
+        } else if (userRole === 'client') {
+            return (
+                <>
+                    <Link to="/client/dashboard" className="text-white hover:text-green-200 transition-colors px-3 py-2 rounded-md font-medium">
+                        Client Dashboard
+                    </Link>
+                    <Link to="/client/drivers" className="text-white hover:text-green-200 transition-colors px-3 py-2 rounded-md font-medium">
+                        View Records
+                    </Link>
+                </>
+            );
+        }
+        return null;
+    };
 
-  return (
-    <header className="bg-gray-900 shadow-2xl sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 md:py-6 flex justify-between items-center">
-        <Link to="/" className="flex items-center space-x-3 transition-transform duration-300 hover:scale-105">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-            <img 
-              src="/driver-track-logo.jpeg" 
-              alt="DriverTrack Logo" 
-              className="w-full h-full object-cover" // object-cover to fill the circular container
-            />
-          </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-wide">DriverTrack</h1>
-        </Link>
-        <nav className="space-x-2 md:space-x-6 flex items-center">
-          {isAuthenticated ? (
-            <>
-              <Link 
-                to="/dashboard" 
-                className="py-2 px-3 md:px-4 rounded-lg text-gray-300 font-medium hover:bg-gray-700/60 hover:text-white transition-colors duration-300"
-              >
-                Dashboard
-              </Link>
-              <Link 
-                to="/drivers" 
-                className="py-2 px-3 md:px-4 rounded-lg text-gray-300 font-medium hover:bg-gray-700/60 hover:text-white transition-colors duration-300"
-              >
-                Drivers
-              </Link>
-              <button 
-                onClick={handleLogout} 
-                className="py-2 px-3 md:px-4 rounded-lg text-gray-300 font-medium hover:bg-gray-700/60 hover:text-white transition-colors duration-300"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link 
-                to="/login" 
-                className="py-2.5 px-6 bg-white text-gray-800 border-2 border-transparent rounded-lg shadow-md font-bold uppercase tracking-wide hover:border-gray-300 transition-all duration-300 transform hover:scale-105"
-              >
-                Login
-              </Link>
-              <Link 
-                to="/register" 
-                className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-md font-bold uppercase tracking-wide hover:from-blue-700 hover:to-blue-900 transition-all duration-300 transform hover:scale-105"
-              >
-                Register
-              </Link>
-            </>
-          )}
-        </nav>
-      </div>
-    </header>
-  );
+    // Don't render the header if the user is not authenticated (e.g., on the login/register page)
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    return (
+        <header className="bg-gray-800 shadow-xl sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                    {/* Logo/App Title */}
+                    <div className="flex-shrink-0">
+                        <Link to={userRole === 'admin' ? '/admin/dashboard' : '/client/dashboard'} className="text-2xl font-bold text-white tracking-wider">
+                            DriverTrack
+                            <span className={`ml-2 text-sm font-normal px-2 py-0.5 rounded-full ${userRole === 'admin' ? 'bg-blue-600' : 'bg-green-600'}`}>
+                                {userRole}
+                            </span>
+                        </Link>
+                    </div>
+
+                    {/* Navigation Links */}
+                    <div className="flex space-x-4">
+                        {getNavLinks()}
+                    </div>
+
+                    {/* Action Button (Logout) */}
+                    <div>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-600 hover:bg-red-700 text-white font-medium py-1.5 px-4 rounded-lg transition-colors shadow-md"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
 };
 
 export default Header;

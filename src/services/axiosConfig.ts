@@ -1,18 +1,21 @@
-// src/services/axiosConfig.ts
+// src/services/axiosConfig.ts (Example structure)
 import axios from 'axios';
-import { getToken } from '../utils/auth';
+import { getToken } from '../utils/auth'; // Import the function to get the token
 
-const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000', // Your backend URL
-  timeout: 5000, // Timeout after 5 seconds
+const api = axios.create({
+  baseURL: 'http://127.0.0.1:8000', // Your backend URL
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Request interceptor to add the auth token to every request
-axiosInstance.interceptors.request.use(
+// Request Interceptor: Attach the Authorization header
+api.interceptors.request.use(
   (config) => {
-    const token = getToken();
+    const token = getToken(); // Get the token from local storage
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Attach the token to the Authorization header
+      config.headers.Authorization = `Bearer ${token}`; 
     }
     return config;
   },
@@ -21,4 +24,19 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-export default axiosInstance;
+// Response Interceptor: Handle 401 Unauthorized globally (optional but good practice)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // If the server says Unauthorized, force a logout
+            // You'll need to import your removeToken/removeRole function here
+            // removeToken(); 
+            // window.location.href = '/login'; // Force redirect to login page
+        }
+        return Promise.reject(error);
+    }
+);
+
+
+export default api;
