@@ -1,6 +1,7 @@
 # app/models.py
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from .database import Base
 
 # Existing User model
@@ -10,28 +11,42 @@ class User(Base):
     username = Column(String(50), unique=True, index=True)
     hashed_password = Column(String(255))
 
-# Update the Driver model
+#  Driver model
 class Driver(Base):
     __tablename__ = "drivers"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), index=True)
-    age = Column(Integer)
-    status = Column(String(50))
-    car_model = Column(String(255))
-    license_number = Column(String, unique=True, index=True)
+    
+    
+    license_number = Column(String(255), unique=True, index=True)
+    phone_number = Column(String(50))
+    car_model = Column(String(100)) 
+    hire_date = Column(Date)
+    
+    status = Column(String(50), default="Active")
 
-    # Add this line to create a relationship to the new DriverPerformance model
+    # Timestamp columns for tracking creation and updates
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    
     performances = relationship("DriverPerformance", back_populates="driver")
 
-# Add this new DriverPerformance model
+    def __repr__(self):
+        return f"<Driver(id={self.id}, name='{self.name}')>"
+
+# Add DriverPerformance model
 class DriverPerformance(Base):
     __tablename__ = "driver_performances"
 
     id = Column(Integer, primary_key=True, index=True)
     driver_id = Column(Integer, ForeignKey("drivers.id"))
     date = Column(Date)
-    rating = Column(Integer) # e.g., on a scale of 1 to 5
-    notes = Column(String)
+    rating = Column(Integer)  
+    notes = Column(String(255))
 
-    # Add this line to create a relationship back to the Driver model
+    
     driver = relationship("Driver", back_populates="performances")
+
+    def __repr__(self):
+        return f"<DriverPerformance(id={self.id}, driver_id={self.driver_id}, rating={self.rating})>"

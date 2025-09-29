@@ -1,63 +1,65 @@
 # app/schemas.py
 
-from pydantic import BaseModel, validator
-from typing import Optional, List
-from datetime import date
+from typing import List, Optional
+from datetime import date, datetime
+from pydantic import BaseModel, Field
 
-# --- User Schemas for Authentication ---
-class UserBase(BaseModel):
+# --- User and Auth Schemas ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+class User(BaseModel):
     username: str
+    is_active: Optional[bool] = True
 
-class UserCreate(UserBase):
+    class Config:
+        orm_mode = True
+
+class UserCreate(BaseModel):
+    username: str
     password: str
 
-class User(UserBase):
-    id: int
-    class Config:
-        from_attributes = True
-
-# --- Driver Performance Schemas (NEW) ---
-class DriverPerformanceBase(BaseModel):
-    # Change 'performance_date' to 'date' to match the frontend
+# --- Driver Schemas ---
+class DriverPerformanceCreate(BaseModel):
     date: date
     rating: int
     notes: Optional[str] = None
 
-class DriverPerformanceCreate(DriverPerformanceBase):
-    pass
-
-class DriverPerformance(DriverPerformanceBase):
+class DriverPerformance(DriverPerformanceCreate):
     id: int
     driver_id: int
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-# --- Driver Schemas ---
 class DriverBase(BaseModel):
     name: str
-    age: int
-    status: str
-    car_model: str
-    license_number: Optional[str] = None
-    
-    @validator('age', pre=True)
-    def age_to_int(cls, v):
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError:
-                raise ValueError('Age must be a valid integer')
-        return v
+    license_number: str
+    phone_number: str
+    car_model: str 
+    hire_date: date
+    status: str = "Active"
 
 class DriverCreate(DriverBase):
     pass
 
-class DriverUpdate(DriverBase):
-    pass
+class DriverUpdate(BaseModel):
+    name: Optional[str] = None
+    license_number: Optional[str] = None
+    phone_number: Optional[str] = None
+    car_model: Optional[str] = None 
+    status: Optional[str] = None
 
-# Update the Driver schema to include the performance history
 class Driver(DriverBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    # Include the list of performances
     performances: List[DriverPerformance] = []
+
     class Config:
-        from_attributes = True
+        orm_mode = True

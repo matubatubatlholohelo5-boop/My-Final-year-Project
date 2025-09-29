@@ -1,41 +1,46 @@
-import axios from 'axios';
+// src/services/authService.ts
 
-const API_URL = 'http://localhost:8000'; // Use your backend port
+import axios from './axiosConfig';
+import { isAxiosError } from 'axios';
+import qs from 'qs'; // Import the qs library
 
 export const registerUser = async (username: string, password: string) => {
   try {
-    const response = await axios.post(`${API_URL}/register/`, {
+    const response = await axios.post('/auth/register', { // Corrected path
       username,
       password,
     });
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw error.response.data;
+    if (isAxiosError(error)) {
+      throw (error as import('axios').AxiosError).response?.data;
     }
     throw error;
   }
 };
 
-// Returns only the access_token string
-export const loginUser = async (username: string, password: string): Promise<string> => {
-  const formData = new URLSearchParams();
-  formData.append('username', username);
-  formData.append('password', password);
-
+export const loginUser = async (username: string, password: string) => {
+  // Correctly format the data for OAuth2PasswordRequestForm
+  const loginData = {
+    username: username,
+    password: password,
+  };
+  
   try {
-    const response = await axios.post(`${API_URL}/login/`, formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const response = await axios.post('/auth/login', qs.stringify(loginData), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
-    return response.data.access_token;
+    return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw error.response.data;
+    if (isAxiosError(error)) {
+      throw (error as import('axios').AxiosError).response?.data;
     }
     throw error;
   }
 };
+
 export function logoutUser() {
-  // Implement logout logic here, e.g., remove tokens from storage
   localStorage.removeItem('authToken');
 }

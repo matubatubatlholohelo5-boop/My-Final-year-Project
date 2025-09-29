@@ -3,13 +3,14 @@
 from typing import List, Optional
 from fastapi import Depends, HTTPException, status, Response, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import IntegrityError # Import the exception
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc
+from datetime import date
 from . import models, schemas, auth, crud
 from .database import engine, get_db
-from datetime import date
+from routers import auth_routes as auth_router
+
 
 app = FastAPI()
 
@@ -25,32 +26,8 @@ app.add_middleware(
 def startup_event():
     models.Base.metadata.create_all(bind=engine)
 
-# Authentication Endpoints
-@app.post("/register/", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
-    hashed_password = auth.get_password_hash(user.password)
-    db_user = models.User(username=user.username, hashed_password=hashed_password)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-@app.post("/login/", response_model=auth.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    access_token = auth.create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+# Include the authentication router. The endpoints are now at /auth/login and /auth/register
+app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 
 # Driver Endpoints
 @app.post("/drivers/", response_model=schemas.Driver, status_code=status.HTTP_201_CREATED)
@@ -60,7 +37,6 @@ def create_driver(
     current_user: schemas.User = Depends(auth.get_current_user_from_token)
 ):
     try:
-        # Check if a driver with the same license number already exists
         existing_driver = db.query(models.Driver).filter(models.Driver.license_number == driver.license_number).first()
         if existing_driver:
             raise HTTPException(
@@ -80,7 +56,6 @@ def create_driver(
             detail="A driver with this license number already exists."
         )
 
-
 @app.get("/drivers/", response_model=List[schemas.Driver])
 def get_drivers(
     search: Optional[str] = None,
@@ -90,19 +65,13 @@ def get_drivers(
     current_user: schemas.User = Depends(auth.get_current_user_from_token)
 ):
     query = db.query(models.Driver)
-
-    # Search for a driver by name or license number (case-insensitive)
     if search:
         query = query.filter(
             models.Driver.name.ilike(f"%{search}%") | 
             models.Driver.license_number.ilike(f"%{search}%")
         )
-
-    # Filter drivers by status
     if status:
         query = query.filter(models.Driver.status == status)
-
-    # Sort the results by a specified column. The default is 'name'.
     if sort_by:
         sort_column = getattr(models.Driver, sort_by, None)
         if sort_column:
@@ -111,7 +80,6 @@ def get_drivers(
     drivers = query.all()
     return drivers
 
-# NEW: Get a single driver by ID with performance history
 @app.get("/drivers/{driver_id}", response_model=schemas.Driver)
 def get_driver_by_id(
     driver_id: int, 
@@ -133,8 +101,6 @@ def update_driver(
     db_driver = db.query(models.Driver).filter(models.Driver.id == driver_id).first()
     if not db_driver:
         raise HTTPException(status_code=404, detail="Driver not found")
-
-    # Check for duplicate license number if it's being updated
     if driver_update.license_number:
         existing_driver_with_license = db.query(models.Driver).filter(
             models.Driver.license_number == driver_update.license_number,
@@ -145,10 +111,8 @@ def update_driver(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This license number is already assigned to another driver."
             )
-
     for field, value in driver_update.dict(exclude_unset=True).items():
         setattr(db_driver, field, value)
-
     db.commit()
     db.refresh(db_driver)
     return db_driver
@@ -162,12 +126,11 @@ def delete_driver(
     db_driver = db.query(models.Driver).filter(models.Driver.id == driver_id).first()
     if db_driver is None:
         raise HTTPException(status_code=404, detail="Driver not found")
-    
+    db.query(models.DriverPerformance).filter(models.DriverPerformance.driver_id == driver_id).delete()
     db.delete(db_driver)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# Driver Performance Endpoints
 @app.post("/drivers/{driver_id}/history/", response_model=schemas.DriverPerformance, status_code=status.HTTP_201_CREATED)
 def add_driver_performance(
     driver_id: int,
@@ -175,8 +138,6 @@ def add_driver_performance(
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(auth.get_current_user_from_token)
 ):
-    # This is the line that was causing the error.
-    # We now call the function from crud.py instead.
     db_perf = crud.add_performance_record(db, perf=perf, driver_id=driver_id)
     return db_perf
 
@@ -189,10 +150,8 @@ def get_driver_history(
     driver = db.query(models.Driver).filter(models.Driver.id == driver_id).first()
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
-    
     return driver.performances
 
-# NEW ENDPOINTS for updating and deleting performance records
 @app.put("/performances/{performance_id}", response_model=schemas.DriverPerformance)
 def update_performance_record(
     performance_id: int,

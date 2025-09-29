@@ -4,8 +4,10 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from pydantic import BaseModel
 from passlib.context import CryptContext
+
+# Import the Pydantic models from the centralized schemas file
+from .schemas import TokenData 
 
 # ------------------
 # Password Hashing
@@ -25,7 +27,7 @@ SECRET_KEY = "your-secret-key-that-is-longer-than-32-characters"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # ------------------
 # Token Creation
@@ -41,15 +43,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 # ------------------
-# User Model for Token
+# User Dependency
 # ------------------
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    username: Optional[str] = None
-
 def get_current_user_from_token(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

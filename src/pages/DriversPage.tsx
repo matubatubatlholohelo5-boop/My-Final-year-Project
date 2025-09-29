@@ -21,7 +21,7 @@ const getStatusColors = (status: string) => {
     }
 };
 
-// Define the type for a Driver object
+// Define the corrected type for a Driver object
 type Driver = {
     id: number;
     name: string;
@@ -29,6 +29,8 @@ type Driver = {
     status: string;
     car_model: string;
     license_number: string;
+    phone_number: string; // Added new field
+    hire_date: string; // Added new field
 };
 
 // Define the initial state for a new driver
@@ -37,7 +39,9 @@ const initialNewDriverState = {
     age: '',
     status: '',
     car_model: '',
-    license_number: ''
+    license_number: '',
+    phone_number: '', // Added new field
+    hire_date: '' // Added new field
 };
 
 const DriversPage: React.FC = () => {
@@ -102,9 +106,13 @@ const DriversPage: React.FC = () => {
         e.preventDefault();
         try {
             if (isEditing && currentDriver) {
-                await updateDriver(currentDriver.id, newDriver);
+                // Ensure age is sent as a number
+                const dataToSend = { ...newDriver, age: Number(newDriver.age) };
+                await updateDriver(currentDriver.id, dataToSend);
             } else {
-                await createDriver(newDriver);
+                // Ensure age is sent as a number
+                const dataToSend = { ...newDriver, age: Number(newDriver.age) };
+                await createDriver(dataToSend);
             }
             setShowModal(false);
             setNewDriver(initialNewDriverState);
@@ -144,9 +152,11 @@ const DriversPage: React.FC = () => {
         setNewDriver({
             name: driver.name,
             age: driver.age.toString(),
-            status: driver.status,
+            phone_number: driver.phone_number, // Corrected: add field
             car_model: driver.car_model,
-            license_number: driver.license_number
+            license_number: driver.license_number,
+            hire_date: driver.hire_date, // Corrected: add field
+            status: driver.status
         });
         setShowModal(true);
     };
@@ -500,6 +510,35 @@ const DriversPage: React.FC = () => {
                                 required
                             />
                         </div>
+                        
+                        {/* New fields added below this line */}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                name="phone_number"
+                                value={newDriver.phone_number}
+                                onChange={handleChange}
+                                placeholder="Phone number"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
+                            <input
+                                type="date"
+                                name="hire_date"
+                                value={newDriver.hire_date}
+                                onChange={handleChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                required
+                            />
+                        </div>
+
+                        {/* End of new fields */}
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">

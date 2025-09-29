@@ -1,62 +1,102 @@
 // src/pages/Login.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../services/authService';
-// Make sure the path is correct and the file exists
-// Update the import path if your AuthContext file is located elsewhere, for example:
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// Or, if the file is named differently, update accordingly:
-// import { useAuth } from '../contexts/auth-context';
+import { loginUser } from '../services/authService';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // NEW: Get the login function from context
+  const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     try {
       const response = await loginUser(username, password);
-      login(response); // Use the context's login function
-      setError('');
-      navigate('/drivers');
-    } catch (err: any) {
-      if (err && typeof err === 'object' && 'detail' in err) {
-        setError((err as { detail?: string }).detail || 'An error occurred during login.');
+      // Check if the response contains the access_token before using it
+      if (response && response.access_token) {
+        login(response.access_token);
+        navigate('/dashboard');
       } else {
-        setError('An error occurred during login.');
+        // If access_token is missing, it's an unexpected error
+        setError('An unexpected login error occurred. Please try again.');
       }
-      console.error(err);
+
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      // Extract the error message from the server response
+      const errorMessage = err.response?.data?.detail || 'An unexpected error occurred. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="username">Username:</label>
-        <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          required
-        />
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+          <h2 className="text-4xl font-extrabold text-center text-gray-800 mb-2">Welcome Back</h2>
+          <p className="text-center text-gray-500 mb-8">Sign in to your account</p>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              />
+            </div>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Signing In...' : 'Sign In'}
+              </button>
+            </div>
+          </form>
+          <div className="mt-6 text-center text-sm">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500 transition duration-200">
+                Register here
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
-      <div>
-        <label htmlFor="password">Password:</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <button type="submit">Login</button>
-    </form>
+    </div>
   );
 };
 
